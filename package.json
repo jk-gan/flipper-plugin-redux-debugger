@@ -1,0 +1,15 @@
+{
+  "name": "flipper-plugin-redux-devtools",
+  "version": "0.0.1",
+  "main": "index.tsx",
+  "license": "MIT",
+  "keywords": [
+    "flipper-plugin"
+  ],
+  "icon": "apps",
+  "title": "Redux DevTools",
+  "category": "Example Plugin",
+  "dependencies": {
+    "flipper": "latest"
+  }
+}
