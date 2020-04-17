@@ -1,5 +1,5 @@
 {
-  "name": "flipper-plugin-redux-devtools",
+  "name": "flipper-plugin-redux-viewer",
   "version": "0.0.1",
   "main": "index.tsx",
   "license": "MIT",
@@ -7,7 +7,7 @@
     "flipper-plugin"
   ],
   "icon": "apps",
-  "title": "Redux DevTools",
+  "title": "Redux Viewer",
   "category": "Example Plugin",
   "dependencies": {
     "flipper": "latest"
