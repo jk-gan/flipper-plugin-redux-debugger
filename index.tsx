@@ -66,13 +66,19 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
     method: string,
     payload: Row,
   ) {
+    console.log('method: ', method);
     console.log('payload: ', payload);
-    return {
-      ...persistedState,
-      actions: [
-        ...persistedState.actions,
-        payload
-      ]
+    switch (method) {
+      case 'actionDispatched':
+        return {
+          ...persistedState,
+          actions: [
+            ...persistedState.actions,
+            payload
+          ]
+        }
+      default:
+        return persistedState;
     }
   };
 
@@ -84,7 +90,7 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
       console.log('selectedData: ', selectedData);
       console.log('selectedId: ', selectedId);
       return (
-        <Panel floating={false} heading={'Info'}>
+        <Panel floating={false} heading={'Payload'}>
           <ManagedDataInspector data={selectedData} expandRoot={true} />
         </Panel>
       )
