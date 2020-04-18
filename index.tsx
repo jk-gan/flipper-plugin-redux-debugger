@@ -8,7 +8,15 @@ import {
   FlexColumn,
   SearchableTable,
   DetailSidebar,
-  Button
+  Button,
+  MultiLineInput,
+  FlexRow,
+  Label,
+  Select,
+  Input,
+  ErrorBlock,
+  Tabs,
+  Tab
 } from 'flipper';
 
 type State = {
@@ -21,22 +29,38 @@ type Row = {
     type: string;
     payload: any;
   };
+  took: string;
+  time: string;
   before: object;
   after: object;
 };
 
 const columns = {
-  id: {
-    value: 'ID',
+  time: {
+    value: 'Time',
   },
   action: {
     value: 'Action Type',
   },
+  took: {
+    value: 'Took',
+  },
 };
 
 const columnSizes = {
-  id: '20%',
-  action: 'flex',
+  time: '20%',
+  action: '35%',
+  took: '15%',
+};
+
+const commonMargin = {
+  margin: '0.5em 1em 0.5em 1em',
+};
+
+const textBox = {
+  flex: 1,
+  height: '100px',
+  ...commonMargin,
 };
 
 type PersistedState = {
@@ -46,6 +70,10 @@ type PersistedState = {
 export default class ReduxViewer extends FlipperPlugin<State, any, any> {
   state = {
     selectedId: '',
+    invokeActionName: '',
+    invokeActionPayloadString: '',
+    error: '',
+    activeTab: 'Diff'
   };
 
   static defaultPersistedState: PersistedState = {
@@ -57,6 +85,7 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
     method: string,
     payload: Row
   ) {
+    console.log('payload: ', payload);
     switch (method) {
       case 'actionDispatched':
         return {
@@ -66,6 +95,11 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
       default:
         return persistedState;
     }
+  }
+
+  constructor(props) {
+    super(props);
+    this.handleDispatch = this.handleDispatch.bind(this);
   }
 
   renderSidebar() {
@@ -82,13 +116,23 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
               expandRoot={true}
             />
           </Panel>
-          <Panel floating={false} heading="Diff">
-            <ManagedDataInspector
-              diff={selectedData.before}
-              data={selectedData.after}
-              collapsed={true}
-              expandRoot={false}
-            />
+          <Panel floating={false} heading="State">
+            <Tabs defaultActive="Diff" onActive={(key: string | null | undefined) => {this.setState({activeTab: key})}} active={this.state.activeTab}>
+                <Tab label="Diff">
+                  <ManagedDataInspector
+                    diff={selectedData.before}
+                    data={selectedData.after}
+                    collapsed={true}
+                    expandRoot={false}
+                  />
+                </Tab>
+                <Tab label="State Tree">
+                  <ManagedDataInspector
+                    data={selectedData.after}
+                    expandRoot={false}
+                  />
+                </Tab>
+              </Tabs>
           </Panel>
         </>
       );
@@ -100,13 +144,16 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
   buildRow(row: Row): TableBodyRow {
     return {
       columns: {
-        id: {
-          value: <Text>{row.id}</Text>,
-          filterValue: row.id,
+        time: {
+          value: <Text>{row.time}</Text>,
+          filterValue: row.time,
         },
         action: {
           value: <Text>{row.action.type}</Text>,
           filterValue: row.type,
+        },
+        took: {
+          value: <Text>{row.took}</Text>,
         },
       },
       key: row.id,
@@ -122,14 +169,77 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
   clear = () => {
     this.setState({ selectedId: '' });
     this.props.setPersistedState({ actions: [] });
-  }
+  };
+
+  handleDispatch = (event) => {
+    this.setState({ error: null });
+    try {
+      const { invokeActionName, invokeActionPayloadString } = this.state;
+
+      const actionPayload =
+        invokeActionPayloadString.trim() == ''
+          ? []
+          : JSON.parse(invokeActionPayloadString);
+
+      this.client
+        .call('dispatchAction', {
+          type: invokeActionName,
+          payload: actionPayload,
+        })
+        .then((res) => {
+          if (res.error) {
+            this.setState({ error: res.message });
+          }
+        });
+    } catch (ex) {
+      if (ex instanceof SyntaxError) {
+        // json format wrong
+        console.group('WrongJsonFormat');
+        console.error(ex);
+        console.groupEnd();
+      } else {
+        console.group('DispatchError');
+        console.error(ex);
+        console.groupEnd();
+      }
+
+      this.setState({ error: ex });
+    }
+  };
 
   render() {
+    const { error } = this.state;
     const { actions } = this.props.persistedState;
     const rows = actions.map((v) => this.buildRow(v));
 
     return (
       <FlexColumn grow={true}>
+        <FlexRow>
+          <Input
+            placeholder={'Type your action here'}
+            style={commonMargin}
+            onChange={(event) => {
+              this.setState({ invokeActionName: event.target.value });
+            }}
+          />
+        </FlexRow>
+        <FlexRow>
+          <MultiLineInput
+            placeholder={'Type your payload json here'}
+            style={textBox}
+            onChange={(event) => {
+              this.setState({
+                invokeActionPayloadString: event.target.value,
+              });
+            }}
+          />
+        </FlexRow>
+        <FlexRow>
+          <Button onClick={this.handleDispatch} style={commonMargin}>
+            Dispatch
+          </Button>
+        </FlexRow>
+        {error && <ErrorBlock error={error}></ErrorBlock>}
         <SearchableTable
           key={100}
           rowLineHeight={28}
