@@ -12,6 +12,7 @@ import {
   FlexColumn,
   SearchableTable,
   DetailSidebar,
+  InspectorSidebar,
 } from 'flipper';
 
 type State = {
@@ -86,13 +87,15 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
           <Panel floating={false} heading="Payload">
             <ManagedDataInspector
               data={selectedData.action.payload}
+              collapsed={true}
               expandRoot={true}
             />
           </Panel>
-          <Panel floating={false} heading="State">
+          <Panel floating={false} heading="Diff">
             <ManagedDataInspector
               diff={selectedData.before}
               data={selectedData.after}
+              collapsed={true}
               expandRoot={false}
             />
           </Panel>
