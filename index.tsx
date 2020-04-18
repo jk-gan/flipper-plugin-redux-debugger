@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   FlipperPlugin,
-  DataDescription,
   Panel,
   ManagedDataInspector,
   Text,
@@ -148,14 +147,4 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
       </FlexColumn>
     );
   }
-
-  /* render() { */
-  /*   return ( */
-  /*     <CenteredView> */
-  /*       <RoundedSection title="Redux Dev Tools"> */
-  /*         <Text size={24}>Current action: {this.state.selectedId}</Text> */
-  /*       </RoundedSection> */
-  /*     </CenteredView> */
-  /*   ) */
-  /* } */
 }
