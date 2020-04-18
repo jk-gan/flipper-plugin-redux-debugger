@@ -1,6 +1,6 @@
 {
   "name": "flipper-plugin-redux-debugger",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "index.tsx",
   "author": "Gan Jun Kai <kuhn96@gmail.com> (https://github.com/jk-gan)",
   "contributors": [
@@ -18,7 +18,7 @@
   ],
   "icon": "apps",
   "title": "Redux Debugger",
-  "category": "Example Plugin",
+  "category": "Redux",
   "dependencies": {
     "flipper": "latest"
   }
