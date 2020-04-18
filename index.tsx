@@ -8,7 +8,7 @@ import {
   FlexColumn,
   SearchableTable,
   DetailSidebar,
-  Button
+  Button,
 } from 'flipper';
 
 type State = {
@@ -21,13 +21,14 @@ type Row = {
     type: string;
     payload: any;
   };
+  time: string;
   before: object;
   after: object;
 };
 
 const columns = {
-  id: {
-    value: 'ID',
+  time: {
+    value: 'Time',
   },
   action: {
     value: 'Action Type',
@@ -35,7 +36,7 @@ const columns = {
 };
 
 const columnSizes = {
-  id: '20%',
+  time: '20%',
   action: 'flex',
 };
 
@@ -57,6 +58,7 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
     method: string,
     payload: Row
   ) {
+    console.log('payload: ', payload);
     switch (method) {
       case 'actionDispatched':
         return {
@@ -100,9 +102,9 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
   buildRow(row: Row): TableBodyRow {
     return {
       columns: {
-        id: {
-          value: <Text>{row.id}</Text>,
-          filterValue: row.id,
+        time: {
+          value: <Text>{row.time}</Text>,
+          filterValue: row.time,
         },
         action: {
           value: <Text>{row.action.type}</Text>,
@@ -122,7 +124,7 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
   clear = () => {
     this.setState({ selectedId: '' });
     this.props.setPersistedState({ actions: [] });
-  }
+  };
 
   render() {
     const { actions } = this.props.persistedState;
