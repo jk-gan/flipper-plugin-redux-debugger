@@ -1,6 +1,6 @@
 {
   "name": "flipper-plugin-redux-debugger",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "main": "index.tsx",
   "license": "MIT",
   "keywords": [
