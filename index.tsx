@@ -1,18 +1,14 @@
 import React from 'react';
 import {
-  RoundedSection,
-  CenteredView,
   FlipperPlugin,
   DataDescription,
   Panel,
   ManagedDataInspector,
   Text,
-  brandColors,
   TableBodyRow,
   FlexColumn,
   SearchableTable,
   DetailSidebar,
-  InspectorSidebar,
 } from 'flipper';
 
 type State = {
@@ -34,12 +30,12 @@ const columns = {
     value: 'ID',
   },
   action: {
-    value: 'Action',
+    value: 'Action Type',
   },
 };
 
 const columnSizes = {
-  id: '15%',
+  id: '20%',
   action: 'flex',
 };
 
@@ -61,8 +57,6 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
     method: string,
     payload: Row
   ) {
-    console.log('method: ', method);
-    console.log('payload: ', payload);
     switch (method) {
       case 'actionDispatched':
         return {
@@ -81,12 +75,9 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
       const selectedData = actions.find((v) => v.id === selectedId);
       return (
         <>
-          <Panel floating={false} heading="Action Type">
-            <DataDescription type="string" value={selectedData.action.type} />
-          </Panel>
-          <Panel floating={false} heading="Payload">
+          <Panel floating={false} heading="Action">
             <ManagedDataInspector
-              data={selectedData.action.payload}
+              data={selectedData.action}
               collapsed={true}
               expandRoot={true}
             />
