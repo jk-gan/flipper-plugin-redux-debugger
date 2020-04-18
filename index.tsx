@@ -9,6 +9,12 @@ import {
   SearchableTable,
   DetailSidebar,
   Button,
+  MultiLineInput,
+  FlexRow,
+  Label,
+  Select,
+  Input,
+  ErrorBlock,
   Tabs,
   Tab
 } from 'flipper';
@@ -47,6 +53,16 @@ const columnSizes = {
   took: '15%',
 };
 
+const commonMargin = {
+  margin: '0.5em 1em 0.5em 1em',
+};
+
+const textBox = {
+  flex: 1,
+  height: '100px',
+  ...commonMargin,
+};
+
 type PersistedState = {
   actions: Array<any>;
 };
@@ -54,6 +70,9 @@ type PersistedState = {
 export default class ReduxViewer extends FlipperPlugin<State, any, any> {
   state = {
     selectedId: '',
+    invokeActionName: '',
+    invokeActionPayloadString: '',
+    error: '',
     activeTab: 'Diff'
   };
 
@@ -76,6 +95,11 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
       default:
         return persistedState;
     }
+  }
+
+  constructor(props) {
+    super(props);
+    this.handleDispatch = this.handleDispatch.bind(this);
   }
 
   renderSidebar() {
@@ -147,12 +171,75 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
     this.props.setPersistedState({ actions: [] });
   };
 
+  handleDispatch = (event) => {
+    this.setState({ error: null });
+    try {
+      const { invokeActionName, invokeActionPayloadString } = this.state;
+
+      const actionPayload =
+        invokeActionPayloadString.trim() == ''
+          ? []
+          : JSON.parse(invokeActionPayloadString);
+
+      this.client
+        .call('dispatchAction', {
+          type: invokeActionName,
+          payload: actionPayload,
+        })
+        .then((res) => {
+          if (res.error) {
+            this.setState({ error: res.message });
+          }
+        });
+    } catch (ex) {
+      if (ex instanceof SyntaxError) {
+        // json format wrong
+        console.group('WrongJsonFormat');
+        console.error(ex);
+        console.groupEnd();
+      } else {
+        console.group('DispatchError');
+        console.error(ex);
+        console.groupEnd();
+      }
+
+      this.setState({ error: ex });
+    }
+  };
+
   render() {
+    const { error } = this.state;
     const { actions } = this.props.persistedState;
     const rows = actions.map((v) => this.buildRow(v));
 
     return (
       <FlexColumn grow={true}>
+        <FlexRow>
+          <Input
+            placeholder={'Type your action here'}
+            style={commonMargin}
+            onChange={(event) => {
+              this.setState({ invokeActionName: event.target.value });
+            }}
+          />
+        </FlexRow>
+        <FlexRow>
+          <MultiLineInput
+            placeholder={'Type your payload json here'}
+            style={textBox}
+            onChange={(event) => {
+              this.setState({
+                invokeActionPayloadString: event.target.value,
+              });
+            }}
+          />
+        </FlexRow>
+        <FlexRow>
+          <Button onClick={this.handleDispatch} style={commonMargin}>
+            Dispatch
+          </Button>
+        </FlexRow>
+        {error && <ErrorBlock error={error}></ErrorBlock>}
         <SearchableTable
           key={100}
           rowLineHeight={28}
