@@ -21,6 +21,7 @@ type Row = {
     type: string;
     payload: any;
   };
+  took: string;
   time: string;
   before: object;
   after: object;
@@ -33,11 +34,15 @@ const columns = {
   action: {
     value: 'Action Type',
   },
+  took: {
+    value: 'Took',
+  },
 };
 
 const columnSizes = {
   time: '20%',
-  action: 'flex',
+  action: '35%',
+  took: '15%',
 };
 
 type PersistedState = {
@@ -109,6 +114,9 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
         action: {
           value: <Text>{row.action.type}</Text>,
           filterValue: row.type,
+        },
+        took: {
+          value: <Text>{row.took}</Text>,
         },
       },
       key: row.id,
