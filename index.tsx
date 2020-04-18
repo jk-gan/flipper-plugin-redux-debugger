@@ -9,6 +9,8 @@ import {
   SearchableTable,
   DetailSidebar,
   Button,
+  Tabs,
+  Tab
 } from 'flipper';
 
 type State = {
@@ -52,6 +54,7 @@ type PersistedState = {
 export default class ReduxViewer extends FlipperPlugin<State, any, any> {
   state = {
     selectedId: '',
+    activeTab: 'Diff'
   };
 
   static defaultPersistedState: PersistedState = {
@@ -89,13 +92,23 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
               expandRoot={true}
             />
           </Panel>
-          <Panel floating={false} heading="Diff">
-            <ManagedDataInspector
-              diff={selectedData.before}
-              data={selectedData.after}
-              collapsed={true}
-              expandRoot={false}
-            />
+          <Panel floating={false} heading="State">
+            <Tabs defaultActive="Diff" onActive={(key: string | null | undefined) => {this.setState({activeTab: key})}} active={this.state.activeTab}>
+                <Tab label="Diff">
+                  <ManagedDataInspector
+                    diff={selectedData.before}
+                    data={selectedData.after}
+                    collapsed={true}
+                    expandRoot={false}
+                  />
+                </Tab>
+                <Tab label="State Tree">
+                  <ManagedDataInspector
+                    data={selectedData.after}
+                    expandRoot={false}
+                  />
+                </Tab>
+              </Tabs>
           </Panel>
         </>
       );
