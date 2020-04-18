@@ -2,6 +2,14 @@
   "name": "flipper-plugin-redux-debugger",
   "version": "1.0.0",
   "main": "index.tsx",
+  "author": "Gan Jun Kai <kuhn96@gmail.com> (https://github.com/jk-gan)",
+  "contributors": [
+    {
+      "name": "Wai Pai Lee",
+      "email": "pailee.wai@gmail.com",
+      "url": "https://plwai.com/"
+    }
+  ],
   "license": "MIT",
   "keywords": [
     "flipper-plugin",
