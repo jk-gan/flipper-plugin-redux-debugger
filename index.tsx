@@ -3,6 +3,7 @@ import {
   RoundedSection,
   CenteredView,
   FlipperPlugin,
+  DataDescription,
   Panel,
   ManagedDataInspector,
   Text,
@@ -10,52 +11,45 @@ import {
   TableBodyRow,
   FlexColumn,
   SearchableTable,
-  DetailSidebar
+  DetailSidebar,
 } from 'flipper';
 
 type State = {
-  selectedId: string; };
+  selectedId: string;
+};
 
 type Row = {
-  type: string;
-  payload: object;
-}
+  id: string;
+  action: {
+    type: string;
+    payload: any;
+  };
+  before: object;
+  after: object;
+};
 
 const columns = {
+  id: {
+    value: 'ID',
+  },
   action: {
-    value: "Action"
-  }
-}
+    value: 'Action',
+  },
+};
 
 const columnSizes = {
+  id: '15%',
   action: 'flex',
 };
 
 type PersistedState = {
-  actions: Array<any>,
+  actions: Array<any>;
 };
 
 export default class ReduxViewer extends FlipperPlugin<State, any, any> {
   state = {
-    selectedId: ''
+    selectedId: '',
   };
-
-  dummyData = [
-    {
-      id: "1",
-      action: "fetchStocksSuccess",
-      payload: {
-        item: "AAA"
-      }
-    },
-    {
-      id: "2",
-      action: "fetchOutletsSuccess",
-      payload: {
-        item: "BBB"
-      }
-    },
-  ]
 
   static defaultPersistedState: PersistedState = {
     actions: [],
@@ -64,7 +58,7 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
   static persistedStateReducer<PersistedState>(
     persistedState: PersistedState,
     method: string,
-    payload: Row,
+    payload: Row
   ) {
     console.log('method: ', method);
     console.log('payload: ', payload);
@@ -72,28 +66,38 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
       case 'actionDispatched':
         return {
           ...persistedState,
-          actions: [
-            ...persistedState.actions,
-            payload
-          ]
-        }
+          actions: [...persistedState.actions, payload],
+        };
       default:
         return persistedState;
     }
-  };
+  }
 
   renderSidebar() {
     const { selectedId } = this.state;
     if (selectedId != '') {
       const { actions } = this.props.persistedState;
-      const selectedData = actions.find(v => v.type === selectedId);
-      console.log('selectedData: ', selectedData);
-      console.log('selectedId: ', selectedId);
+      const selectedData = actions.find((v) => v.id === selectedId);
       return (
-        <Panel floating={false} heading={'Payload'}>
-          <ManagedDataInspector data={selectedData} expandRoot={true} />
-        </Panel>
-      )
+        <>
+          <Panel floating={false} heading="Action Type">
+            <DataDescription type="string" value={selectedData.action.type} />
+          </Panel>
+          <Panel floating={false} heading="Payload">
+            <ManagedDataInspector
+              data={selectedData.action.payload}
+              expandRoot={true}
+            />
+          </Panel>
+          <Panel floating={false} heading="State">
+            <ManagedDataInspector
+              diff={selectedData.before}
+              data={selectedData.after}
+              expandRoot={false}
+            />
+          </Panel>
+        </>
+      );
     }
 
     return null;
@@ -102,30 +106,29 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
   buildRow(row: Row): TableBodyRow {
     return {
       columns: {
+        id: {
+          value: <Text>{row.id}</Text>,
+          filterValue: row.id,
+        },
         action: {
-          value: <Text>{row.type}</Text>,
+          value: <Text>{row.action.type}</Text>,
           filterValue: row.type,
         },
-        payload: {
-          value: <Text>{JSON.stringify(row.payload)}</Text>,
-          filterValue: JSON.stringify(row.payload),
-        },
       },
-      key: row.type,
+      key: row.id,
       copyText: JSON.stringify(row),
-      filterValue: `${row.type}`,
+      filterValue: `${row.id}`,
     };
   }
 
   onRowHighlighted = (key) => {
-    console.log("key: ", key);
+    console.log('key: ', key);
     this.setState({ selectedId: key[0] });
   };
 
   render() {
     const { actions } = this.props.persistedState;
-    console.log('actions: ', actions);
-    const rows = actions.map(v => this.buildRow(v));
+    const rows = actions.map((v) => this.buildRow(v));
 
     return (
       <FlexColumn grow={true}>
@@ -157,4 +160,3 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
   /*   ) */
   /* } */
 }
-
