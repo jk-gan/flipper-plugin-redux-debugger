@@ -1,6 +1,6 @@
-# Redux Viewer Plugin for Flipper
+# Redux Debugger Plugin for Flipper
 
-`flipper-plugin-redux-viewer` allows you read React Native redux logs inside [Flipper](https://fbflipper.com/) now:
+`flipper-plugin-redux-debugger` allows you read React Native redux logs inside [Flipper](https://fbflipper.com/) now:
 
 - Action
 - State comparison
@@ -30,10 +30,10 @@ if (__DEV__) {
 }
 ```
 
-3. Install `flipper-plugin-redux-viewer` in Flipper desktop client
+3. Install `flipper-plugin-redux-debugger` in Flipper desktop client
 
-4. Start your app, then you should be able to see Redux Viewer on your Flipper app
+4. Start your app, then you should be able to see Redux Debugger on your Flipper app
 
 ## Acknowledgement
 
-This plugin is inspired by [flipper-plugin-reduxinspector](https://github.com/blankapp/flipper-plugin-reduxinspector) which only work for Flutter.
+This plugin is inspired by [flipper-plugin-reduxinspector](https://github.com/blankapp/flipper-plugin-reduxinspector) which only for Flutter.

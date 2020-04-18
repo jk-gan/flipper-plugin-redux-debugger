@@ -1,13 +1,15 @@
 {
-  "name": "flipper-plugin-redux-viewer",
+  "name": "flipper-plugin-redux-debugger",
   "version": "0.0.1",
   "main": "index.tsx",
   "license": "MIT",
   "keywords": [
-    "flipper-plugin"
+    "flipper-plugin",
+    "redux",
+    "react-native"
   ],
   "icon": "apps",
-  "title": "Redux Viewer",
+  "title": "Redux Debugger",
   "category": "Example Plugin",
   "dependencies": {
     "flipper": "latest"
