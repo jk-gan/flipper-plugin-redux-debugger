@@ -9,6 +9,7 @@ import {
   FlexColumn,
   SearchableTable,
   DetailSidebar,
+  Button
 } from 'flipper';
 
 type State = {
@@ -116,9 +117,13 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
   }
 
   onRowHighlighted = (key) => {
-    console.log('key: ', key);
     this.setState({ selectedId: key[0] });
   };
+
+  clear = () => {
+    this.setState({ selectedId: '' });
+    this.props.setPersistedState({ actions: [] });
+  }
 
   render() {
     const { actions } = this.props.persistedState;
@@ -137,7 +142,7 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
           multiHighlight={false}
           rows={rows}
           stickyBottom={true}
-          /* actions={<Button onClick={this.clear}>Clear</Button>} */
+          actions={<Button onClick={this.clear}>Clear</Button>}
         />
         <DetailSidebar>{this.renderSidebar()}</DetailSidebar>
       </FlexColumn>
