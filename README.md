@@ -21,7 +21,7 @@ let store = createStore(RootReducer, {}, applyMiddleware(logger));
 
 3. Register plugin in your app:
 ```javascript
-# Add this line in your root component
+// Add this line in your root component
 import react, { useEffect } from 'react';
 import { registerPlugin } from 'redux-flipper';
 
