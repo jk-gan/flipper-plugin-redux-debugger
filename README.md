@@ -1,5 +1,7 @@
 # Redux Debugger Plugin for Flipper
 
+![screenshot of the plugin](/images/screenshot.png)
+
 `flipper-plugin-redux-debugger` allows you read React Native redux logs inside [Flipper](https://fbflipper.com/) now:
 
 - Action
