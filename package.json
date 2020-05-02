@@ -2,7 +2,7 @@
   "$schema": "https://fbflipper.com/schemas/plugin-package/v2.json",
   "name": "flipper-plugin-redux-debugger",
   "id": "flipper-plugin-redux-debugger",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "main": "dist/bundle.js",
   "flipperBundlerEntry": "index.tsx",
   "author": "Gan Jun Kai <kuhn96@gmail.com> (https://github.com/jk-gan)",
