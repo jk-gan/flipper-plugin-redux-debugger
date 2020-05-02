@@ -1,7 +1,10 @@
 {
+  "$schema": "https://fbflipper.com/schemas/plugin-package/v2.json",
   "name": "flipper-plugin-redux-debugger",
+  "id": "flipper-plugin-redux-debugger",
   "version": "1.0.1",
-  "main": "index.tsx",
+  "main": "dist/bundle.js",
+  "flipperBundlerEntry": "index.tsx",
   "author": "Gan Jun Kai <kuhn96@gmail.com> (https://github.com/jk-gan)",
   "contributors": [
     {
@@ -19,7 +22,14 @@
   "icon": "apps",
   "title": "Redux Debugger",
   "category": "Redux",
-  "dependencies": {
+  "peerDependencies": {
     "flipper": "latest"
+  },
+  "devDependencies": {
+    "flipper": "latest",
+    "flipper-pkg": "latest"
+  },
+  "scripts": {
+    "prepack": "flipper-pkg lint && flipper-pkg bundle"
   }
 }
