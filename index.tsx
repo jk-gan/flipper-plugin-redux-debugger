@@ -129,6 +129,7 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
                 <Tab label="State Tree">
                   <ManagedDataInspector
                     data={selectedData.after}
+                    collapsed={true}
                     expandRoot={false}
                   />
                 </Tab>
