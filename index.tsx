@@ -143,6 +143,9 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
   }
 
   buildRow(row: Row): TableBodyRow {
+    const copyText = () => JSON.stringify(row);
+    // this line is a hack to stay compatible with Flipper <0.46
+    copyText.toString = () => JSON.stringify(row);
     return {
       columns: {
         time: {
@@ -158,7 +161,7 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
         },
       },
       key: row.id,
-      copyText: JSON.stringify(row),
+      copyText,
       filterValue: `${row.id}`,
     };
   }
