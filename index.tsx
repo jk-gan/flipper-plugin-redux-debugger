@@ -180,10 +180,16 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
     try {
       const { invokeActionName, invokeActionPayloadString } = this.state;
 
-      const actionPayload =
-        invokeActionPayloadString.trim() == ''
-          ? []
-          : JSON.parse(invokeActionPayloadString);
+      let actionPayload;
+      try {
+        actionPayload =
+          invokeActionPayloadString.trim() == ''
+            ? []
+            : JSON.parse(invokeActionPayloadString);
+      } catch {
+        //can happen when we try to parse a string input
+        actionPayload = invokeActionPayloadString;
+      }
 
       this.client
         .call('dispatchAction', {
