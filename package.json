@@ -2,11 +2,11 @@
   "$schema": "https://fbflipper.com/schemas/plugin-package/v2.json",
   "name": "flipper-plugin-redux-debugger",
   "id": "flipper-plugin-redux-debugger",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "description": "Redux Debugger for Flipper",
   "main": "dist/bundle.js",
   "flipperBundlerEntry": "index.tsx",
-  "author": "Gan Jun Kai <kuhn96@gmail.com> (https://github.com/jk-gan)",
+  "author": "jk-gan <junkai@hey.com> (https://github.com/jk-gan)",
   "contributors": [
     {
       "name": "Wai Pai Lee",

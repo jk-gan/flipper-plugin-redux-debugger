@@ -16,7 +16,7 @@ import {
   Input,
   ErrorBlock,
   Tabs,
-  Tab
+  Tab,
 } from 'flipper';
 
 type State = {
@@ -65,19 +65,20 @@ const textBox = {
 
 type PersistedState = {
   actions: Array<any>;
+  selectedId: string;
 };
 
 export default class ReduxViewer extends FlipperPlugin<State, any, any> {
   state = {
-    selectedId: '',
     invokeActionName: '',
     invokeActionPayloadString: '',
     error: '',
-    activeTab: 'Diff'
+    activeTab: 'Diff',
   };
 
   static defaultPersistedState: PersistedState = {
     actions: [],
+    selectedId: '',
   };
 
   static persistedStateReducer<PersistedState>(
@@ -92,6 +93,12 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
           ...persistedState,
           actions: [...persistedState.actions, payload],
         };
+      case 'actionInit':
+        return {
+          ...persistedState,
+          actions: [payload],
+          selectedId: payload.id,
+        };
       default:
         return persistedState;
     }
@@ -103,7 +110,7 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
   }
 
   renderSidebar() {
-    const { selectedId } = this.state;
+    const { selectedId } = this.props.persistedState;
     if (selectedId != '') {
       const { actions } = this.props.persistedState;
       const selectedData = actions.find((v) => v.id === selectedId);
@@ -117,23 +124,29 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
             />
           </Panel>
           <Panel floating={false} heading="State">
-            <Tabs defaultActive="Diff" onActive={(key: string | null | undefined) => {this.setState({activeTab: key})}} active={this.state.activeTab}>
-                <Tab label="Diff">
-                  <ManagedDataInspector
-                    diff={selectedData.before}
-                    data={selectedData.after}
-                    collapsed={true}
-                    expandRoot={false}
-                  />
-                </Tab>
-                <Tab label="State Tree">
-                  <ManagedDataInspector
-                    data={selectedData.after}
-                    collapsed={true}
-                    expandRoot={false}
-                  />
-                </Tab>
-              </Tabs>
+            <Tabs
+              defaultActive="Diff"
+              onActive={(key: string | null | undefined) => {
+                this.setState({ activeTab: key });
+              }}
+              active={this.state.activeTab}
+            >
+              <Tab label="Diff">
+                <ManagedDataInspector
+                  diff={selectedData.before}
+                  data={selectedData.after}
+                  collapsed={true}
+                  expandRoot={false}
+                />
+              </Tab>
+              <Tab label="State Tree">
+                <ManagedDataInspector
+                  data={selectedData.after}
+                  collapsed={true}
+                  expandRoot={false}
+                />
+              </Tab>
+            </Tabs>
           </Panel>
         </>
       );
@@ -167,12 +180,11 @@ export default class ReduxViewer extends FlipperPlugin<State, any, any> {
   }
 
   onRowHighlighted = (key) => {
-    this.setState({ selectedId: key[0] });
+    this.props.setPersistedState({ selectedId: key[0] });
   };
 
   clear = () => {
-    this.setState({ selectedId: '' });
-    this.props.setPersistedState({ actions: [] });
+    this.props.setPersistedState({ actions: [], selectedId: '' });
   };
 
   handleDispatch = (event) => {
