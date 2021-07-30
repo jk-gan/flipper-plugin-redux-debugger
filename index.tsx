@@ -1,282 +1,158 @@
 import React from 'react';
 import {
-  FlipperPlugin,
+  PluginClient,
+  createState,
+  DataTable,
+  DataInspector,
+  usePlugin,
+  useValue,
   Panel,
-  ManagedDataInspector,
-  Text,
-  TableBodyRow,
-  FlexColumn,
-  SearchableTable,
+  Layout,
   DetailSidebar,
-  Button,
-  MultiLineInput,
-  FlexRow,
-  Label,
-  Select,
-  Input,
-  ErrorBlock,
   Tabs,
   Tab,
-} from 'flipper';
+  useMemoize,
+} from 'flipper-plugin';
+import { Button } from 'antd';
 
-type State = {
-  selectedId: string;
+type Action = {
+  type: string;
+  payload: object;
 };
 
-type Row = {
-  id: string;
-  action: {
-    type: string;
-    payload: any;
-  };
-  took: string;
+type ActionState = {
+  id: number;
   time: string;
+  took: string;
+  action: Action;
   before: object;
   after: object;
 };
 
-const columns = {
-  time: {
-    value: 'Time',
+type Events = { actionDispatched: ActionState; actionInit: ActionState };
+
+const columns = [
+  {
+    key: 'id',
+    visible: false,
   },
-  action: {
-    value: 'Action Type',
+  {
+    key: 'time',
+    title: 'Time',
   },
-  took: {
-    value: 'Took',
+  {
+    key: 'action',
+    title: 'Action',
   },
-};
+  {
+    key: 'duration',
+    title: 'Duration',
+  },
+];
 
-const columnSizes = {
-  time: '20%',
-  action: '35%',
-  took: '15%',
-};
-
-const commonMargin = {
-  margin: '0.5em 1em 0.5em 1em',
-};
-
-const textBox = {
-  flex: 1,
-  height: '100px',
-  ...commonMargin,
-};
-
-type PersistedState = {
-  actions: Array<any>;
-  selectedId: string;
-};
-
-export default class ReduxViewer extends FlipperPlugin<State, any, any> {
-  state = {
-    invokeActionName: '',
-    invokeActionPayloadString: '',
-    error: '',
-    activeTab: 'Diff',
-  };
-
-  static defaultPersistedState: PersistedState = {
-    actions: [],
-    selectedId: '',
-  };
-
-  static persistedStateReducer<PersistedState>(
-    persistedState: PersistedState,
-    method: string,
-    payload: Row
-  ) {
-    console.log('payload: ', payload);
-    switch (method) {
-      case 'actionDispatched':
-        return {
-          ...persistedState,
-          actions: [...persistedState.actions, payload],
-        };
-      case 'actionInit':
-        return {
-          ...persistedState,
-          actions: [payload],
-          selectedId: payload.id,
-        };
-      default:
-        return persistedState;
-    }
-  }
-
-  constructor(props) {
-    super(props);
-    this.handleDispatch = this.handleDispatch.bind(this);
-  }
-
-  renderSidebar() {
-    const { selectedId } = this.props.persistedState;
-    if (selectedId != '') {
-      const { actions } = this.props.persistedState;
-      const selectedData = actions.find((v) => v.id === selectedId);
-      return (
-        <>
-          <Panel floating={false} heading="Action">
-            <ManagedDataInspector
-              data={selectedData.action}
-              collapsed={true}
-              expandRoot={true}
-            />
-          </Panel>
-          <Panel floating={false} heading="State">
-            <Tabs
-              defaultActive="Diff"
-              onActive={(key: string | null | undefined) => {
-                this.setState({ activeTab: key });
-              }}
-              active={this.state.activeTab}
-            >
-              <Tab label="Diff">
-                <ManagedDataInspector
-                  diff={selectedData.before}
-                  data={selectedData.after}
-                  collapsed={true}
-                  expandRoot={false}
-                />
-              </Tab>
-              <Tab label="State Tree">
-                <ManagedDataInspector
-                  data={selectedData.after}
-                  collapsed={true}
-                  expandRoot={false}
-                />
-              </Tab>
-            </Tabs>
-          </Panel>
-        </>
-      );
-    }
-
-    return null;
-  }
-
-  buildRow(row: Row): TableBodyRow {
-    const copyText = () => JSON.stringify(row);
-    // this line is a hack to stay compatible with Flipper <0.46
-    copyText.toString = () => JSON.stringify(row);
+function createRows(actions: ActionState[]): Record<string, any>[] {
+  return actions.map((action) => {
     return {
-      columns: {
-        time: {
-          value: <Text>{row.time}</Text>,
-          filterValue: row.time,
-        },
-        action: {
-          value: <Text>{row.action.type}</Text>,
-          filterValue: row.type,
-        },
-        took: {
-          value: <Text>{row.took}</Text>,
-        },
-      },
-      key: row.id,
-      copyText,
-      filterValue: `${row.id}`,
+      id: action.id,
+      time: action.time,
+      action: action.action.type,
+      duration: action.took,
     };
+  });
+}
+
+export function plugin(client: PluginClient<Events, {}>) {
+  const selectedID = createState<number | null>(null, { persist: 'selection' });
+  const actions = createState<ActionState[]>([], { persist: 'actions' });
+
+  client.onMessage('actionDispatched', (newAction) => {
+    actions.update((currentActions) => {
+      currentActions.push(newAction);
+    });
+  });
+
+  client.onMessage('actionInit', (newAction) => {
+    actions.set([newAction]);
+    selectedID.set(newAction.id);
+  });
+
+  function setSelection(id: number) {
+    selectedID.set(id);
   }
 
-  onRowHighlighted = (key) => {
-    this.props.setPersistedState({ selectedId: key[0] });
-  };
-
-  clear = () => {
-    this.props.setPersistedState({ actions: [], selectedId: '' });
-  };
-
-  handleDispatch = (event) => {
-    this.setState({ error: null });
-    try {
-      const { invokeActionName, invokeActionPayloadString } = this.state;
-
-      let actionPayload;
-      try {
-        actionPayload =
-          invokeActionPayloadString.trim() == ''
-            ? []
-            : JSON.parse(invokeActionPayloadString);
-      } catch {
-        //can happen when we try to parse a string input
-        actionPayload = invokeActionPayloadString;
-      }
-
-      this.client
-        .call('dispatchAction', {
-          type: invokeActionName,
-          payload: actionPayload,
-        })
-        .then((res) => {
-          if (res.error) {
-            this.setState({ error: res.message });
-          }
-        });
-    } catch (ex) {
-      if (ex instanceof SyntaxError) {
-        // json format wrong
-        console.group('WrongJsonFormat');
-        console.error(ex);
-        console.groupEnd();
-      } else {
-        console.group('DispatchError');
-        console.error(ex);
-        console.groupEnd();
-      }
-
-      this.setState({ error: ex });
-    }
-  };
-
-  render() {
-    const { error } = this.state;
-    const { actions } = this.props.persistedState;
-    const rows = actions.map((v) => this.buildRow(v));
-
-    return (
-      <FlexColumn grow={true}>
-        <FlexRow>
-          <Input
-            placeholder={'Type your action here'}
-            style={commonMargin}
-            onChange={(event) => {
-              this.setState({ invokeActionName: event.target.value });
-            }}
-          />
-        </FlexRow>
-        <FlexRow>
-          <MultiLineInput
-            placeholder={'Type your payload json here'}
-            style={textBox}
-            onChange={(event) => {
-              this.setState({
-                invokeActionPayloadString: event.target.value,
-              });
-            }}
-          />
-        </FlexRow>
-        <FlexRow>
-          <Button onClick={this.handleDispatch} style={commonMargin}>
-            Dispatch
-          </Button>
-        </FlexRow>
-        {error && <ErrorBlock error={error}></ErrorBlock>}
-        <SearchableTable
-          key={100}
-          rowLineHeight={28}
-          floating={false}
-          multiline={true}
-          columnSizes={columnSizes}
-          columns={columns}
-          onRowHighlighted={this.onRowHighlighted}
-          multiHighlight={false}
-          rows={rows}
-          stickyBottom={true}
-          actions={<Button onClick={this.clear}>Clear</Button>}
-        />
-        <DetailSidebar>{this.renderSidebar()}</DetailSidebar>
-      </FlexColumn>
-    );
+  function clearAction() {
+    actions.set([]);
   }
+
+  return { actions, selectedID, clearAction, setSelection };
+}
+
+export function Component() {
+  const instance = usePlugin(plugin);
+  const actions = useValue(instance.actions);
+  const selectedId = useValue(instance.selectedID);
+
+  const rows = useMemoize((actions) => createRows(actions), [actions]);
+
+  const selectedData = actions.find((act) => act.id === selectedId);
+  return (
+    <>
+      <DataTable<Record<string, any>>
+        records={rows}
+        columns={columns}
+        enableSearchbar={true}
+        enableAutoScroll={true}
+        enableMultiSelect={false}
+        enableColumnHeaders={true}
+        onSelect={(record) => {
+          instance.setSelection(record?.id);
+        }}
+        extraActions={<Button onClick={instance.clearAction}>Clear</Button>}
+      />
+      <DetailSidebar width={400}>{renderSidebar(selectedData)}</DetailSidebar>
+    </>
+  );
+}
+
+function renderSidebar(selectedData: ActionState) {
+  if (!selectedData) {
+    return;
+  }
+
+  const { type, ...payload } = selectedData?.action;
+  const actionData = {
+    type,
+    payload,
+  };
+
+  return (
+    <Layout.Container gap pad>
+      <Panel title="Action" gap pad>
+        <DataInspector
+          data={actionData}
+          collapsed={true}
+          expandRoot={true}
+        ></DataInspector>
+      </Panel>
+      <Panel title="State" gap pad>
+        <Tabs defaultActiveKey="Diff" centered={true}>
+          <Tab tab="Diff" tabKey="Diff">
+            <DataInspector
+              diff={selectedData.before}
+              data={selectedData.after}
+              collapsed={true}
+              expandRoot={false}
+            ></DataInspector>
+          </Tab>
+          <Tab tab="State Tree" tabKey="StateTree">
+            <DataInspector
+              data={selectedData.after}
+              collapsed={true}
+              expandRoot={false}
+            ></DataInspector>
+          </Tab>
+        </Tabs>
+      </Panel>
+    </Layout.Container>
+  );
 }
