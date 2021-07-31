@@ -1,6 +1,6 @@
 # Redux Debugger Plugin for Flipper
 
-![screenshot of the plugin](https://imgur.com/QUDYozo.png)
+![screenshot of the plugin](https://i.imgur.com/blqn8oT.png)
 
 `flipper-plugin-redux-debugger` allows you read React Native redux logs inside [Flipper](https://fbflipper.com/) now:
 
@@ -20,12 +20,14 @@ cd ios && pod install
 2. Add the middleware into your redux store:
 
 ```javascript
-import { createStore, applyMiddleware } from 'redux';
+import { createStore, applyMiddleware } from "redux";
 
-const middlewares = [/* other middlewares */];
+const middlewares = [
+  /* other middlewares */
+];
 
 if (__DEV__) {
-  const createDebugger = require('redux-flipper').default;
+  const createDebugger = require("redux-flipper").default;
   middlewares.push(createDebugger());
 }
 
