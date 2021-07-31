@@ -13,7 +13,7 @@ import {
   Tab,
   useMemoize,
 } from "flipper-plugin";
-import { Button, Input, message, Typography, Divider } from "antd";
+import { Button, Input, message } from "antd";
 
 const { TextArea } = Input;
 
