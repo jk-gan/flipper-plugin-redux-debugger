@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   PluginClient,
   createState,
@@ -12,8 +12,10 @@ import {
   Tabs,
   Tab,
   useMemoize,
-} from 'flipper-plugin';
-import { Button } from 'antd';
+} from "flipper-plugin";
+import { Button, Input, message, Typography, Divider } from "antd";
+
+const { TextArea } = Input;
 
 type Action = {
   type: string;
@@ -33,20 +35,20 @@ type Events = { actionDispatched: ActionState; actionInit: ActionState };
 
 const columns = [
   {
-    key: 'id',
+    key: "id",
     visible: false,
   },
   {
-    key: 'time',
-    title: 'Time',
+    key: "time",
+    title: "Time",
   },
   {
-    key: 'action',
-    title: 'Action',
+    key: "action",
+    title: "Action",
   },
   {
-    key: 'duration',
-    title: 'Duration',
+    key: "duration",
+    title: "Duration",
   },
 ];
 
@@ -62,16 +64,20 @@ function createRows(actions: ActionState[]): Record<string, any>[] {
 }
 
 export function plugin(client: PluginClient<Events, {}>) {
-  const selectedID = createState<number | null>(null, { persist: 'selection' });
-  const actions = createState<ActionState[]>([], { persist: 'actions' });
+  const selectedID = createState<number | null>(null, { persist: "selection" });
+  const actions = createState<ActionState[]>([], { persist: "actions" });
+  const actionType = createState<string>();
+  const actionPayloadString = createState<string>();
 
-  client.onMessage('actionDispatched', (newAction) => {
+  message.config({ duration: 2, maxCount: 3 });
+
+  client.onMessage("actionDispatched", (newAction) => {
     actions.update((currentActions) => {
       currentActions.push(newAction);
     });
   });
 
-  client.onMessage('actionInit', (newAction) => {
+  client.onMessage("actionInit", (newAction) => {
     actions.set([newAction]);
     selectedID.set(newAction.id);
   });
@@ -84,19 +90,80 @@ export function plugin(client: PluginClient<Events, {}>) {
     actions.set([]);
   }
 
-  return { actions, selectedID, clearAction, setSelection };
+  function setActionType(event) {
+    actionType.set(event.target.value);
+  }
+
+  function setActionPayloadString(event) {
+    actionPayloadString.set(event.target.value);
+  }
+
+  async function sendDispatchMessage() {
+    if (client.isConnected) {
+      try {
+        const payloadStringValue = actionPayloadString.get();
+        const actionTypeValue = actionType.get();
+        let actionPayload;
+        try {
+          actionPayload =
+            payloadStringValue.trim() == ""
+              ? []
+              : JSON.parse(payloadStringValue);
+        } catch (e) {
+          //can happen when we try to parse a string input
+          message.error("Invalid JSON format in the payload");
+          actionPayload = payloadStringValue;
+        }
+
+        await client.send("dispatchAction", {
+          type: actionTypeValue,
+          payload: actionPayload,
+        });
+        message.success("The action is dispatched");
+      } catch (e) {
+        message.error("Failed to get response from client " + e);
+      }
+    }
+  }
+
+  return {
+    actions,
+    selectedID,
+    actionType,
+    actionPayloadString,
+    clearAction,
+    setSelection,
+    sendDispatchMessage,
+    setActionPayloadString,
+    setActionType,
+  };
 }
 
 export function Component() {
   const instance = usePlugin(plugin);
   const actions = useValue(instance.actions);
   const selectedId = useValue(instance.selectedID);
+  const actionType = useValue(instance.actionType);
+  const actionPayloadString = useValue(instance.actionPayloadString);
 
   const rows = useMemoize((actions) => createRows(actions), [actions]);
 
   const selectedData = actions.find((act) => act.id === selectedId);
   return (
     <>
+      <Panel title="Dispatch Action to the app" gap pad>
+        <Input
+          allowClear
+          value={actionType}
+          onChange={instance.setActionType}
+        />
+        <TextArea
+          rows={4}
+          value={actionPayloadString}
+          onChange={instance.setActionPayloadString}
+        />
+        <Button onClick={instance.sendDispatchMessage}>Dispatch Action</Button>
+      </Panel>
       <DataTable<Record<string, any>>
         records={rows}
         columns={columns}
