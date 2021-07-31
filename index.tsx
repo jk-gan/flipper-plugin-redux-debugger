@@ -71,9 +71,11 @@ export function plugin(client: PluginClient<Events, {}>) {
 
   message.config({ duration: 2, maxCount: 3 });
 
-  client.onMessage("actionDispatched", (newAction) => {
+  client.onMessage("actionDispatched", (newAction: ActionState) => {
     actions.update((currentActions) => {
-      currentActions.push(newAction);
+      if (newAction.action) {
+        currentActions.push(newAction);
+      }
     });
   });
 
