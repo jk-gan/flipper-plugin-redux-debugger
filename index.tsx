@@ -14,6 +14,7 @@ import {
   useMemoize,
 } from "flipper-plugin";
 import { Button, Input, message } from "antd";
+import { renderAction } from "./renderAction";
 
 const { TextArea } = Input;
 
@@ -57,7 +58,7 @@ function createRows(actions: ActionState[]): Record<string, any>[] {
     return {
       id: action.id,
       time: action.time,
-      action: action.action.type,
+      action: renderAction(action.action.type),
       duration: action.took,
     };
   });
