@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   PluginClient,
   createState,
@@ -12,6 +12,8 @@ import {
   Tabs,
   Tab,
   useMemoize,
+  styled,
+  theme,
 } from "flipper-plugin";
 import { Button, Input, message } from "antd";
 
@@ -107,13 +109,10 @@ export function plugin(client: PluginClient<Events, {}>) {
         const actionTypeValue = actionType.get();
         let actionPayload;
         try {
-          actionPayload =
-            payloadStringValue.trim() == ""
-              ? []
-              : JSON.parse(payloadStringValue);
+          actionPayload = payloadStringValue.trim() == "" ? [] : JSON.parse(payloadStringValue);
         } catch (e) {
-          //can happen when we try to parse a string input
-          message.error("Invalid JSON format in the payload");
+          // can happen when we try to parse a string input
+          message.error("Ivalid JSON format in the payload");
           actionPayload = payloadStringValue;
         }
 
@@ -141,6 +140,16 @@ export function plugin(client: PluginClient<Events, {}>) {
   };
 }
 
+const Container = styled.div({
+  // Styling DataInspector's 'added' objects
+  '& div[class*="-Added"]': {
+    backgroundColor: '#deffdd',
+    '@media (prefers-color-scheme: dark)': {
+      backgroundColor: theme.semanticColors.diffAddedBackground,
+    },
+  },
+});
+
 export function Component() {
   const instance = usePlugin(plugin);
   const actions = useValue(instance.actions);
@@ -148,22 +157,14 @@ export function Component() {
   const actionType = useValue(instance.actionType);
   const actionPayloadString = useValue(instance.actionPayloadString);
 
-  const rows = useMemoize((actions) => createRows(actions), [actions]);
+  const rows = useMemoize(actions => createRows(actions), [actions]);
 
-  const selectedData = actions.find((act) => act.id === selectedId);
+  const selectedData = actions.find(act => act.id === selectedId);
   return (
     <>
       <Panel title="Dispatch Action to the app" gap pad>
-        <Input
-          allowClear
-          value={actionType}
-          onChange={instance.setActionType}
-        />
-        <TextArea
-          rows={4}
-          value={actionPayloadString}
-          onChange={instance.setActionPayloadString}
-        />
+        <Input allowClear value={actionType} onChange={instance.setActionType} />
+        <TextArea rows={4} value={actionPayloadString} onChange={instance.setActionPayloadString} />
         <Button onClick={instance.sendDispatchMessage}>Dispatch Action</Button>
       </Panel>
       <DataTable<Record<string, any>>
@@ -173,7 +174,7 @@ export function Component() {
         enableAutoScroll={true}
         enableMultiSelect={false}
         enableColumnHeaders={true}
-        onSelect={(record) => {
+        onSelect={record => {
           instance.setSelection(record?.id);
         }}
         extraActions={<Button onClick={instance.clearAction}>Clear</Button>}
@@ -184,44 +185,79 @@ export function Component() {
 }
 
 function renderSidebar(selectedData: ActionState) {
+  const [keyFilter, setKeyFilter] = useState('');
+  const [filteredSelectedData, setFilteredSelectedData] = useState<typeof selectedData>(selectedData);
+
+  useEffect(() => {
+    if (!keyFilter || !selectedData) {
+      setFilteredSelectedData(selectedData);
+      return;
+    }
+    const filteredData: ActionState = {
+      ...selectedData,
+      before: {},
+      after: {},
+    };
+
+    Object.keys(selectedData.after).forEach(key => {
+      if (key.toLowerCase().includes(keyFilter.toLowerCase())) {
+        const typedKey = key as keyof typeof selectedData.after;
+        filteredData.after[typedKey] = selectedData.after[typedKey] || {};
+      }
+    });
+
+    Object.keys(selectedData.before).forEach(key => {
+      if (key.toLowerCase().includes(keyFilter.toLowerCase())) {
+        const typedKey = key as keyof typeof selectedData.before;
+        filteredData.before[typedKey] = selectedData.before[typedKey];
+      }
+    });
+
+    setFilteredSelectedData(filteredData);
+  }, [selectedData, keyFilter]);
+
   if (!selectedData) {
     return;
   }
 
-  const { type, ...payload } = selectedData?.action;
+  const {type, ...payload} = selectedData?.action;
   const actionData = {
     type,
     payload,
   };
 
   return (
-    <Layout.Container gap pad>
-      <Panel title="Action" gap pad>
-        <DataInspector
-          data={actionData}
-          collapsed={true}
-          expandRoot={true}
-        ></DataInspector>
-      </Panel>
-      <Panel title="State" gap pad>
-        <Tabs defaultActiveKey="Diff" centered={true}>
-          <Tab tab="Diff" tabKey="Diff">
-            <DataInspector
-              diff={selectedData.before}
-              data={selectedData.after}
-              collapsed={true}
-              expandRoot={false}
-            ></DataInspector>
-          </Tab>
-          <Tab tab="State Tree" tabKey="StateTree">
-            <DataInspector
-              data={selectedData.after}
-              collapsed={true}
-              expandRoot={false}
-            ></DataInspector>
-          </Tab>
-        </Tabs>
-      </Panel>
-    </Layout.Container>
+    <Container>
+      <Layout.Container gap pad>
+        <Panel title="Action" gap pad>
+          <DataInspector data={actionData} collapsed={true} expandRoot={true}></DataInspector>
+        </Panel>
+        <Panel title="State" gap pad>
+          <Input
+            allowClear
+            value={keyFilter}
+            placeholder="Filter state keys..."
+            style={{marginTop: 8}}
+            onChange={e => setKeyFilter(e.target.value)}
+          />
+          <Tabs defaultActiveKey="Diff" centered={true}>
+            <Tab tab="Diff" tabKey="Diff">
+              <DataInspector
+                diff={filteredSelectedData?.before}
+                data={filteredSelectedData?.after}
+                collapsed={true}
+                filter={keyFilter}
+                highlightColor={theme.searchHighlightBackground.green}
+                expandRoot={!!keyFilter}
+              >
+              </DataInspector>
+            </Tab>
+            <Tab tab="State Tree" tabKey="StateTree">
+              <DataInspector data={selectedData.after} collapsed={true} expandRoot={false}></DataInspector>
+            </Tab>
+          </Tabs>
+        </Panel>
+      </Layout.Container>
+    </Container>
   );
 }
