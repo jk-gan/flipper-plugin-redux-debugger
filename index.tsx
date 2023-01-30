@@ -112,7 +112,7 @@ export function plugin(client: PluginClient<Events, {}>) {
           actionPayload = payloadStringValue.trim() == "" ? [] : JSON.parse(payloadStringValue);
         } catch (e) {
           // can happen when we try to parse a string input
-          message.error("Ivalid JSON format in the payload");
+          message.error("Invalid JSON format in the payload");
           actionPayload = payloadStringValue;
         }
 
@@ -157,9 +157,9 @@ export function Component() {
   const actionType = useValue(instance.actionType);
   const actionPayloadString = useValue(instance.actionPayloadString);
 
-  const rows = useMemoize(actions => createRows(actions), [actions]);
+  const rows = useMemoize((actions) => createRows(actions), [actions]);
 
-  const selectedData = actions.find(act => act.id === selectedId);
+  const selectedData = actions.find((act) => act.id === selectedId);
   return (
     <>
       <Panel title="Dispatch Action to the app" gap pad>
@@ -174,7 +174,7 @@ export function Component() {
         enableAutoScroll={true}
         enableMultiSelect={false}
         enableColumnHeaders={true}
-        onSelect={record => {
+        onSelect={(record) => {
           instance.setSelection(record?.id);
         }}
         extraActions={<Button onClick={instance.clearAction}>Clear</Button>}
@@ -220,7 +220,7 @@ function renderSidebar(selectedData: ActionState) {
     return;
   }
 
-  const {type, ...payload} = selectedData?.action;
+  const { type, ...payload } = selectedData?.action;
   const actionData = {
     type,
     payload,

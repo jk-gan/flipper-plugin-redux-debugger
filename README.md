@@ -1,16 +1,5 @@
 # Redux Debugger Plugin for Flipper
 
-## What does this fork change compared to the original one?
-* Add filter to the sidebar to allow filtering by state keys. This makes life a lot easier, especially with bigger apps / lots of states
-* Change "Add" color to green to make more visible which data has been added (green) and which data has been removed (red)
-
-![30-18-nsbae-ec3om](https://user-images.githubusercontent.com/12933672/215464164-76e42927-9dbf-4e4b-9566-1be4688bd307.gif)
-![redux-debugger-change-arrows](https://user-images.githubusercontent.com/12933672/215464566-d927be99-92e2-477f-911b-fbde6a05dfd4.png)
-
-
-
-## Original README ⤵️
-
 ![screenshot of the plugin](https://i.imgur.com/blqn8oT.png)
 
 `flipper-plugin-redux-debugger` allows you read React Native redux logs inside [Flipper](https://fbflipper.com/) now:
