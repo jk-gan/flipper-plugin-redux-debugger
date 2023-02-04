@@ -34,6 +34,9 @@ type ActionState = {
 };
 
 type Events = { actionDispatched: ActionState; actionInit: ActionState };
+type Methods = {
+  dispatchAction(params: { type: string; payload: any }): Promise<void>;
+};
 
 const columns = [
   {
@@ -65,7 +68,7 @@ function createRows(actions: ActionState[]): Record<string, any>[] {
   });
 }
 
-export function plugin(client: PluginClient<Events, {}>) {
+export function plugin(client: PluginClient<Events, Methods>) {
   const selectedID = createState<number | null>(null, { persist: "selection" });
   const actions = createState<ActionState[]>([], { persist: "actions" });
   const actionType = createState<string>();
@@ -105,11 +108,14 @@ export function plugin(client: PluginClient<Events, {}>) {
   async function sendDispatchMessage() {
     if (client.isConnected) {
       try {
-        const payloadStringValue = actionPayloadString.get();
-        const actionTypeValue = actionType.get();
+        const payloadStringValue = actionPayloadString.get() ?? "";
+        const actionTypeValue = actionType.get() ?? "";
         let actionPayload;
         try {
-          actionPayload = payloadStringValue.trim() == "" ? [] : JSON.parse(payloadStringValue);
+          actionPayload =
+            payloadStringValue.trim() == ""
+              ? []
+              : JSON.parse(payloadStringValue);
         } catch (e) {
           // can happen when we try to parse a string input
           message.error("Invalid JSON format in the payload");
@@ -143,8 +149,8 @@ export function plugin(client: PluginClient<Events, {}>) {
 const Container = styled.div({
   // Styling DataInspector's 'added' objects
   '& div[class*="-Added"]': {
-    backgroundColor: '#deffdd',
-    '@media (prefers-color-scheme: dark)': {
+    backgroundColor: "#deffdd",
+    "@media (prefers-color-scheme: dark)": {
       backgroundColor: theme.semanticColors.diffAddedBackground,
     },
   },
@@ -163,8 +169,16 @@ export function Component() {
   return (
     <>
       <Panel title="Dispatch Action to the app" gap pad>
-        <Input allowClear value={actionType} onChange={instance.setActionType} />
-        <TextArea rows={4} value={actionPayloadString} onChange={instance.setActionPayloadString} />
+        <Input
+          allowClear
+          value={actionType}
+          onChange={instance.setActionType}
+        />
+        <TextArea
+          rows={4}
+          value={actionPayloadString}
+          onChange={instance.setActionPayloadString}
+        />
         <Button onClick={instance.sendDispatchMessage}>Dispatch Action</Button>
       </Panel>
       <DataTable<Record<string, any>>
@@ -184,9 +198,10 @@ export function Component() {
   );
 }
 
-function renderSidebar(selectedData: ActionState) {
-  const [keyFilter, setKeyFilter] = useState('');
-  const [filteredSelectedData, setFilteredSelectedData] = useState<typeof selectedData>(selectedData);
+function renderSidebar(selectedData?: ActionState) {
+  const [keyFilter, setKeyFilter] = useState("");
+  const [filteredSelectedData, setFilteredSelectedData] =
+    useState<typeof selectedData>(selectedData);
 
   useEffect(() => {
     if (!keyFilter || !selectedData) {
@@ -199,14 +214,14 @@ function renderSidebar(selectedData: ActionState) {
       after: {},
     };
 
-    Object.keys(selectedData.after).forEach(key => {
+    Object.keys(selectedData.after).forEach((key) => {
       if (key.toLowerCase().includes(keyFilter.toLowerCase())) {
         const typedKey = key as keyof typeof selectedData.after;
         filteredData.after[typedKey] = selectedData.after[typedKey] || {};
       }
     });
 
-    Object.keys(selectedData.before).forEach(key => {
+    Object.keys(selectedData.before).forEach((key) => {
       if (key.toLowerCase().includes(keyFilter.toLowerCase())) {
         const typedKey = key as keyof typeof selectedData.before;
         filteredData.before[typedKey] = selectedData.before[typedKey];
@@ -230,15 +245,15 @@ function renderSidebar(selectedData: ActionState) {
     <Container>
       <Layout.Container gap pad>
         <Panel title="Action" gap pad>
-          <DataInspector data={actionData} collapsed={true} expandRoot={true}></DataInspector>
+          <DataInspector data={actionData} collapsed={true} expandRoot={true} />
         </Panel>
         <Panel title="State" gap pad>
           <Input
             allowClear
             value={keyFilter}
             placeholder="Filter state keys..."
-            style={{marginTop: 8}}
-            onChange={e => setKeyFilter(e.target.value)}
+            style={{ marginTop: 8 }}
+            onChange={(e) => setKeyFilter(e.target.value)}
           />
           <Tabs defaultActiveKey="Diff" centered={true}>
             <Tab tab="Diff" tabKey="Diff">
@@ -249,11 +264,14 @@ function renderSidebar(selectedData: ActionState) {
                 filter={keyFilter}
                 highlightColor={theme.searchHighlightBackground.green}
                 expandRoot={!!keyFilter}
-              >
-              </DataInspector>
+              />
             </Tab>
             <Tab tab="State Tree" tabKey="StateTree">
-              <DataInspector data={selectedData.after} collapsed={true} expandRoot={false}></DataInspector>
+              <DataInspector
+                data={selectedData.after}
+                collapsed={true}
+                expandRoot={false}
+              />
             </Tab>
           </Tabs>
         </Panel>
